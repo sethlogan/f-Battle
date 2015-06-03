@@ -53,7 +53,7 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
    function refresh() {
    	total_import_points=0;
    	
-      input=document.getElementById('output').value;
+      input=document.getElementById('output').value.hexDecode();
       try {character=JSON.parse(input.substring(7,input.length));}
 	   catch (e) {alert('Invaid JSON profile');}
 	   
@@ -166,7 +166,7 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
 	      	      
 	   code+='"defense":'+defense_value+',"speed":'+speed_value+',"stamina":'+stamina_value+',"luck":'+luck_value+'}';
 	   
-      document.getElementById('output').innerHTML=code;
+      document.getElementById('output').innerHTML=code.hexEncode();
       alert('Copy and paste the generated text and send it in a message to Superbot on F-chat to complete your profile setup.');
 	}
 
@@ -216,7 +216,7 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
 		newdiv.innerHTML=attackText(attack_num);
 		updateWarning();	   
 	}
-	
+   
 	function attackText(num) {
 		return "<h4>Additional Stat > Attack #"+num+"</h4>"
 		+"<table>"
@@ -250,6 +250,29 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
 	   document.getElementById('myform').reset();
 	}
 
+	
+	String.prototype.hexEncode = function(){
+		 var hex, i;
+		 var result = "";
+		 
+		 for (i=0; i<this.length; i++) {
+			  hex = this.charCodeAt(i).toString(16);
+			  result += ("000"+hex).slice(-4);
+		 }
+
+		 return result
+	}
+   
+   String.prototype.hexDecode = function(){
+      var j;
+      var hexes = this.match(/.{1,4}/g) || [];
+      var back = "";
+      
+      for(j = 0; j<hexes.length; j++) 
+          back += String.fromCharCode(parseInt(hexes[j], 16));
+
+      return back;
+   }
 </script>
 </body>
 </html>
