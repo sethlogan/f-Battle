@@ -1,0 +1,246 @@
+<html>
+<body bgcolor='#DDDDDD'>
+
+<h2><font face='Comic Sans MS'>F-battle Character Profiler</font></h2>
+<img src='images/logo.png' width="100" height="100"><img src='images/beta.png' width="100" height="100"><br><br>
+
+<form id='myform'>
+
+<h4>Basic Stats (Points)</h4>
+<table>
+  <tr><td>Defense</td><td> <input type="number" value="0" min="0" max="100" id="defense_points" onchange="clickDefense(this); return false;" required></td></tr>
+  <tr><td>Speed</td><td> <input type="number" value="0" min="0" max="100" id="speed_points" onchange="clickSpeed(this); return false;" required></td></tr>
+  <tr><td>Stamina</td><td> <input type="number" value="0" min="0" max="100" id="stamina_points" onchange="clickStamina(this); return false;" required></tr>
+  <tr><td>Luck</td><td> <input type="number" value="0" min="0" max="100" id="luck_points" onchange="clickLuck(this); return false;" required></tr>
+</table>
+
+<br>
+
+<div id="attacks"></div><br>
+<button onclick="addAttack(); return false;">Add Attack</button>
+<button onclick="clearAttacks(); return false;">Clear Attacks</button><br><br><br>
+
+<h4>Optional Details<h4>
+<table>
+   <tr><td>Nickname</td><td> <input type='text' id='nickname'></td></tr>
+   <tr><td>Team Name</td><td> <input type='text' id='team_name'></td></tr>
+   <tr><td>Mini Bio</td><td> <textarea id='bio' rows='3' cols='25'></textarea></td></tr>
+</table><br>
+
+<textarea id="output" rows='6' cols='50'>**Warnings**&#10- You must allot 100 more points before generating a profile.</textarea><br>
+<button onclick="generate(); return false;" id='generate_btn' disabled>Generate Profile (Export)</button>
+<button onclick="refresh(); return false;" id='refresh_btn'>Refresh Profiler (Import)</button>
+<button onclick="resetAll(); return false;" id='reset_btn'>Reset Profiler</button>
+</form><br><br><br>
+
+Written in html and javascript by Slogan <a href='https://www.f-list.net/c/slogan/'><img src='images/slogan.png' width='50'></a>
+
+<script>
+   MAX_POINTS=100;
+   initialize();
+   
+   function initialize() {
+   	attack_num=0;
+	   points=0;
+	
+	   previous_defense=0, previous_speed=0, previous_stamina=0, previous_luck=0;
+	   defense_value=0, speed_value=0, stamina_value=0, luck_value=0;
+	
+	   previous_attacks=[];
+	   attack_values=[];
+   }
+   
+   function refresh() {
+      input=document.getElementById('output').value;
+      try {character=JSON.parse(input.substring(7,input.length));}
+	   catch (e) {alert('Invaid JSON profile');}
+	   
+	   import_points=character['defense']+character['speed']+character['stamina']+character['luck'];
+	   
+	   document.getElementById('defense_points').value=character['defense'];
+	   document.getElementById('speed_points').value=character['speed'];
+	   document.getElementById('stamina_points').value=character['stamina'];
+	   document.getElementById('luck_points').value=character['luck'];
+	   
+	   if (character['nickname'] !=undefined)
+	      document.getElementById('nickname').value=character['nickname'];
+	   
+	   if (character['bio'] != undefined)
+	      document.getElementById('bio').value=character['bio'];
+	      
+	   if (character['team name'] != undefined)
+	      document.getElementById('team_name').value=character['team name'];
+	      
+	   clearAttacks();
+      
+      if (character['attacks'] != undefined) {
+	      for (j=0; j<character['attacks'].length; j++) {
+	         addAttack();
+	         document.getElementById('attack'+(j+1)+'_name').value=character['attacks'][j]['name'];
+	         
+	         import_points=character['attacks'][j]['points'];
+	         document.getElementById('attack'+(j+1)+'_points').value=character['attacks'][j]['points'];
+	         document.getElementById('attack'+(j+1)+'_affects').value=character['attacks'][j]['affects'];
+	         
+	         if (character['attacks'][j]['shortcut'] != undefined)
+	            document.getElementById('attack'+(j+1)+'_shortcut').value=character['attacks'][j]['shortcut'];
+	      }
+	   }
+	   
+	   updateWarning();
+	   
+	   if (import_points>MAX_POINTS) {
+	      alert("Warning: Point count on import exceeded 100. Aborting.")
+	      resetAll()
+	   }
+	     
+	}
+	
+	
+	function updateWarning() {
+	   points_left=MAX_POINTS-points;
+	   out=''
+	      
+	   if (points_left>0)
+	      out="- You must allot "+points_left+" more points before generating a profile.&#10";
+	   else if (points_left<0)
+	      out="- You may only use 100 points. Remove "+Math.abs(points_left)+" points before generating a profile.&#10";
+	      
+	   for (i=1; i<=attack_num; i++) {
+	      name=document.getElementById('attack'+i+'_name').value;
+	      if (name==null || name=='')
+	         out+='- You must name Attack #'+i+'&#10';
+	   }
+	   
+	   if (out=='') {
+	      document.getElementById('output').innerHTML='**No warnings**';
+	      document.getElementById('generate_btn').disabled=false;
+	   }
+	   else {
+	      document.getElementById('output').innerHTML="**Warnings**&#10"+out;
+	      document.getElementById('generate_btn').disabled=true;
+	   }
+	}
+	
+	function generate() {
+	   code='signup {';
+	   
+      if (attack_num>0) {
+         code+='"attacks":[';
+         
+         for (i=1; i<=attack_num; i++) {
+            code+='{"name":"'+document.getElementById('attack'+i+'_name').value+'",';
+            
+            shortcut=document.getElementById('attack'+i+'_shortcut').value;
+            if (shortcut!=null && shortcut!='')
+               code+='"shortcut":"'+shortcut+'",';
+               
+            code+='"affects":"'+document.getElementById('attack'+i+'_affects').value+'",';
+            code+='"points":"'+document.getElementById('attack'+i+'_points').value+'"},';
+               
+         }
+         code=code.substring(0,code.length-1)+'],';
+      }
+ 
+ 	   nickname=document.getElementById('nickname').value;
+ 	   bio=document.getElementById('bio').value;
+ 	   team_name=document.getElementById('team_name').value;
+ 	   
+	   if (nickname!=null && nickname!='')
+	      code+='"nickname":"'+nickname+'",';
+	   
+	   if (bio!=null && bio!='')
+	      code+='"bio":"'+bio+'",';
+
+	   if (team_name!=null && team_name!='')
+	      code+='"team name":"'+team_name+'",';
+	      	      
+	   code+='"defense":'+defense_value+',"speed":'+speed_value+',"stamina":'+stamina_value+',"luck":'+luck_value+'}';
+	   
+      document.getElementById('output').innerHTML=code;
+      alert('Copy and paste the generated text and send it in a message to Superbot on F-chat to complete your profile setup.');
+	}
+
+   function clickAttack(element) {
+      index=element.id.substring(6,7);
+      attack_values[index]=element.value;
+      points+=attack_values[index]-previous_attacks[index];
+      previous_attacks[index]=attack_values[index];
+      updateWarning();
+   }
+   
+   function clickDefense(element) {
+      defense_value=element.value;
+      points+=defense_value-previous_defense;
+      previous_defense=defense_value;
+      updateWarning();
+   }
+   
+   function clickSpeed(element) {
+      speed_value=element.value;
+      points+=speed_value-previous_speed;
+      previous_speed=speed_value;
+      updateWarning();
+   }
+   
+   function clickStamina(element) {
+      stamina_value=element.value;
+      points+=stamina_value-previous_stamina;
+      previous_stamina=stamina_value;
+      updateWarning();
+   }
+   
+   function clickLuck(element) {
+      luck_value=element.value;
+      points+=luck_value-previous_luck;
+      previous_luck=luck_value;
+      updateWarning();
+   }
+   
+	function addAttack() {
+      attack_num+=1;
+      attack_values[attack_num]=0;
+      previous_attacks[attack_num]=0;
+
+		var newdiv = document.createElement('div');
+      document.getElementById('attacks').appendChild(newdiv);
+		newdiv.innerHTML=attackText(attack_num);
+		updateWarning();	   
+	}
+	
+	function attackText(num) {
+		return "<h4>Additional Stat > Attack #"+num+"</h4>"
+		+"<table>"
+		
+		+"<tr><td>Attack Name (required)</td><td> <input type='text' id='attack"+num+"_name' onchange='updateWarning()' required></td></tr>"
+		+"<tr><td>Shortcut (optional)</td><td> <input type='text' id='attack"+num+"_shortcut'></td></tr>"
+		+"<tr><td>Points</td><td> <input type='number' value='1' min='1' max='100' id='attack"+num+"_points' onchange='clickAttack(this); return false;' required></td></tr>"
+		
+		+"<tr><td>Affects</td><td><select id='attack"+num+"_affects'>"
+		+"<option value='attack'>Health</option>"
+		+"<option value='attack'>Attack</option>"
+		+"<option value='defense'>Defense</option>"
+		+"<option value='speed'>Speed</option>"
+		+"<option value='stamina'>Stamina</option>"
+		+"<option value='luck'>Luck</option><br>"
+		+"</select></td></tr>"
+		
+		+"</table><br>";
+   }
+		
+	function clearAttacks() {
+		attack_num=0;
+	   document.getElementById('attacks').innerHTML='';
+	   updateWarning();	 
+	}
+	
+	function resetAll() {
+	   clearAttacks();
+	   initialize();
+	   document.getElementById('output').innerHTML='**Warnings**&#10- You must allot 100 more points before generating a profile.';
+	   document.getElementById('myform').reset();
+	}
+
+</script>
+</body>
+</html>
