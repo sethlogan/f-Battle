@@ -24,7 +24,7 @@
 <table>
    <tr><td>Nickname</td><td> <input type='text' id='nickname'></td></tr>
    <tr><td>Team Name</td><td> <input type='text' id='team_name'></td></tr>
-   <tr><td>Mini Bio</td><td> <textarea id='bio' rows='3' cols='25'></textarea></td></tr>
+   <tr><td>Mini Bio (max 100 char)</td><td> <textarea id='bio' rows='3' cols='25' maxlength='100'></textarea></td></tr>
 </table><br>
 
 <textarea id="output" rows='6' cols='50'>**Warnings**&#10- You must allot 100 more points before generating a profile.</textarea><br>
@@ -51,16 +51,22 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
    }
    
    function refresh() {
+   	total_import_points=0;
+   	
       input=document.getElementById('output').value;
       try {character=JSON.parse(input.substring(7,input.length));}
 	   catch (e) {alert('Invaid JSON profile');}
 	   
-	   import_points=character['defense']+character['speed']+character['stamina']+character['luck'];
+	   total_import_points=character['defense']+character['speed']+character['stamina']+character['luck'];
 	   
 	   document.getElementById('defense_points').value=character['defense'];
+	   defense_value=character['defense'];
 	   document.getElementById('speed_points').value=character['speed'];
+	   speed_value=character['speed'];
 	   document.getElementById('stamina_points').value=character['stamina'];
+	   stamina_value=character['stamina'];
 	   document.getElementById('luck_points').value=character['luck'];
+	   luck_value=character['luck'];
 	   
 	   if (character['nickname'] !=undefined)
 	      document.getElementById('nickname').value=character['nickname'];
@@ -79,6 +85,9 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
 	         document.getElementById('attack'+(j+1)+'_name').value=character['attacks'][j]['name'];
 	         
 	         import_points=character['attacks'][j]['points'];
+	         attack_values[j+1]=import_points;
+	         total_import_points+=import_points;
+	         
 	         document.getElementById('attack'+(j+1)+'_points').value=character['attacks'][j]['points'];
 	         document.getElementById('attack'+(j+1)+'_affects').value=character['attacks'][j]['affects'];
 	         
@@ -89,7 +98,7 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
 	   
 	   updateWarning();
 	   
-	   if (import_points>MAX_POINTS) {
+	   if (total_import_points>MAX_POINTS) {
 	      alert("Warning: Point count on import exceeded 100. Aborting.")
 	      resetAll()
 	   }
@@ -202,7 +211,7 @@ Written in html and javascript by Slogan <a href='https://www.f-list.net/c/sloga
       attack_values[attack_num]=0;
       previous_attacks[attack_num]=0;
 
-		var newdiv = document.createElement('div');
+		newdiv = document.createElement('div');
       document.getElementById('attacks').appendChild(newdiv);
 		newdiv.innerHTML=attackText(attack_num);
 		updateWarning();	   
